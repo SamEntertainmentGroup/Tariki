@@ -1,0 +1,170 @@
+name: Build Algeria offline map
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y osmium-tool build-essential libsqlite3-dev zlib1g-dev git gdal-bin unzip
+          osmium --version
+          ogr2ogr --version
+
+      - name: Run self-tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Build tippecanoe
+        run: |
+          git clone --depth 1 https://github.com/felt/tippecanoe.git
+          make -j"$(nproc)" -C tippecanoe
+          ./tippecanoe/tippecanoe --version
+
+      - name: Download Geofabrik extracts (Algeria and Tunisia)
+        run: |
+          mkdir -p work out
+          for country in algeria tunisia; do
+            curl --fail --location --retry 5 --retry-delay 3 \
+              --output "work/$country.osm.pbf" \
+              "https://download.geofabrik.de/africa/$country-latest.osm.pbf"
+          done
+          # Un seul réseau : les routes qui passent la frontière sont reliées.
+          osmium merge --overwrite --output work/region.osm.pbf work/algeria.osm.pbf work/tunisia.osm.pbf
+          ls -l work/*.osm.pbf
+
+      - name: Extract roads
+        run: |
+          osmium tags-filter --overwrite --output work/roads.osm.pbf work/region.osm.pbf \
+            w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary,secondary_link,tertiary,tertiary_link,unclassified,unclassified_link,residential,residential_link
+          osmium export --overwrite --geometry-types=linestring \
+            --output-format geojsonseq --output work/roads.geojsonseq work/roads.osm.pbf
+          ls -l work/roads.geojsonseq
+          head -c 500 work/roads.geojsonseq | cat -v
+
+      - name: Extract place names
+        run: |
+          osmium tags-filter --overwrite --output work/places.osm.pbf work/region.osm.pbf \
+            n/place=city,town,village,hamlet,suburb
+          osmium export --overwrite --geometry-types=point \
+            --output-format geojsonseq --output work/places.geojsonseq work/places.osm.pbf
+          ls -l work/places.geojsonseq
+          head -c 500 work/places.geojsonseq | cat -v
+
+      - name: Extract borders and coastline
+        run: |
+          osmium tags-filter --overwrite --output work/borders.osm.pbf work/region.osm.pbf \
+            w/boundary=administrative
+          osmium export --overwrite --geometry-types=linestring \
+            --output-format geojsonseq --output work/borders.geojsonseq work/borders.osm.pbf
+          osmium tags-filter --overwrite --output work/coast.osm.pbf work/region.osm.pbf \
+            w/natural=coastline
+          osmium export --overwrite --geometry-types=linestring \
+            --output-format geojsonseq --output work/coast.geojsonseq work/coast.osm.pbf
+          ls -l work/borders.geojsonseq work/coast.geojsonseq
+
+      - name: Extract administrative areas
+        run: |
+          osmium tags-filter --overwrite --output work/admin.osm.pbf work/region.osm.pbf \
+            r/admin_level=2,4
+          osmium export --overwrite --geometry-types=polygon \
+            --output-format geojsonseq --output work/admin.geojsonseq work/admin.osm.pbf
+          ls -l work/admin.geojsonseq
+
+      - name: Download sea and neighbouring countries
+        run: |
+          base=https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson
+          for name in ne_10m_land ne_10m_admin_0_boundary_lines_land ne_10m_admin_0_boundary_lines_disputed_areas ne_10m_admin_0_countries; do
+            curl --fail --location --retry 5 --retry-delay 3 --output "work/$name.geojson" "$base/$name.geojson"
+          done
+          # Terres OpenStreetMap (côte précise). Si le serveur ne répond pas, la côte vient de Natural Earth.
+          if curl --fail --location --retry 4 --retry-delay 30 --retry-all-errors --connect-timeout 30 \
+            --output work/land-polygons.zip https://osmdata.openstreetmap.de/download/land-polygons-split-4326.zip; then
+            unzip -q -o work/land-polygons.zip -d work
+            ls -l work/land-polygons-split-4326
+          else
+            echo "::warning::osmdata.openstreetmap.de ne répond pas : côtes algérienne et tunisienne moins précises (Natural Earth). Relancez plus tard pour des côtes précises."
+            rm -f work/land-polygons.zip
+          fi
+          ls -l work/*.geojson
+
+      - name: Build base layer (sea, neighbours, Algerian and Tunisian land)
+        run: |
+          python3 tools/build_base_layer.py area --admin work/admin.geojsonseq --output work/dz-area.geojson
+          # Terres découpées par le contour de l'Algérie et de la Tunisie : OpenStreetMap (côte précise) ou, à défaut, Natural Earth.
+          land=work/land-polygons-split-4326/land_polygons.shp
+          [ -f "$land" ] || land=work/ne_10m_land.geojson
+          ogr2ogr -f GeoJSON -spat -9.5 18.5 12.5 38.5 -clipsrc work/dz-area.geojson \
+            -simplify 0.0002 -lco COORDINATE_PRECISION=5 -nlt PROMOTE_TO_MULTI \
+            work/dz-land.geojson "$land"
+          # Terres de la région (Natural Earth), simplifiées : les pays voisins.
+          ogr2ogr -f GeoJSON -clipsrc -30 0 35 52 -simplify 0.005 -lco COORDINATE_PRECISION=4 -nlt PROMOTE_TO_MULTI \
+            work/ne-land.geojson work/ne_10m_land.geojson
+          python3 tools/build_base_layer.py assemble --area work/dz-area.geojson --dz-land work/dz-land.geojson \
+            --ne-land work/ne-land.geojson --ne-borders work/ne_10m_admin_0_boundary_lines_land.geojson \
+            --ne-disputed work/ne_10m_admin_0_boundary_lines_disputed_areas.geojson \
+            --ne-countries work/ne_10m_admin_0_countries.geojson --output out/algeria-base.geojson.gz \
+            | tee out/base-report.txt
+
+      - name: Prepare layers
+        run: |
+          python3 tools/prepare_layers.py \
+            --roads-in work/roads.geojsonseq --roads-out work/roads.tiles.geojsonseq \
+            --places-in work/places.geojsonseq --places-out work/places.tiles.geojsonseq \
+            --borders-in work/borders.geojsonseq --borders-out work/borders.tiles.geojsonseq \
+            --coast-in work/coast.geojsonseq --coast-out work/coast.tiles.geojsonseq
+
+      - name: Build vector tiles
+        run: |
+          layers=(-L roads:work/roads.tiles.geojsonseq -L places:work/places.tiles.geojsonseq)
+          for name in borders coast; do
+            if [ -s "work/$name.tiles.geojsonseq" ]; then
+              layers+=(-L "$name:work/$name.tiles.geojsonseq")
+            fi
+          done
+          ./tippecanoe/tippecanoe --force \
+            --output out/algeria-map.mbtiles \
+            --name "Algeria and Tunisia roads, places and borders" \
+            --attribution "© OpenStreetMap contributors" \
+            --minimum-zoom=4 --maximum-zoom=14 \
+            --no-feature-limit --no-tile-size-limit \
+            "${layers[@]}"
+          ls -l out/algeria-map.mbtiles
+
+      - name: Inspect result
+        shell: bash
+        run: |
+          python3 tools/inspect_mbtiles.py out/algeria-map.mbtiles | tee out/report.txt
+          cat out/base-report.txt >> out/report.txt
+          { echo '```'; cat out/report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish map to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete map-latest --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
+          gh release create map-latest --repo "$GITHUB_REPOSITORY" \
+            --title "Carte Algérie et Tunisie (routes et lieux)" \
+            --notes "Générée par le workflow Build Algeria offline map, exécution ${{ github.run_number }}." \
+            out/algeria-map.mbtiles out/algeria-base.geojson.gz out/report.txt
+
+      - name: Upload map
+        uses: actions/upload-artifact@v4
+        with:
+          name: algeria-map
+          path: |
+            out/algeria-map.mbtiles
+            out/algeria-base.geojson.gz
+            out/report.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
