@@ -23,17 +23,8 @@ jobs:
       - name: Run self-tests
         run: python3 -m unittest discover -s tests -v
 
-      - name: Download Geofabrik extracts (Algeria and Tunisia)
-        run: |
-          mkdir -p work out
-          for country in algeria tunisia; do
-            curl --fail --location --retry 5 --retry-delay 3 \
-              --output "work/$country.osm.pbf" \
-              "https://download.geofabrik.de/africa/$country-latest.osm.pbf"
-          done
-          # Un seul réseau : les routes qui passent la frontière sont reliées.
-          osmium merge --overwrite --output work/region.osm.pbf work/algeria.osm.pbf work/tunisia.osm.pbf
-          ls -l work/*.osm.pbf
+      - name: Download OpenStreetMap extracts (Algeria and Tunisia)
+        run: bash tools/download_extracts.sh
 
       - name: Extract roads
         run: |
