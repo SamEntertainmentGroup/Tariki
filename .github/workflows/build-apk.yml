@@ -1,0 +1,109 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ALERTS_URL: https://jarti.app/wp-admin/admin-ajax.php
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run self-tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Check alerts server URL
+        run: |
+          case "$ALERTS_URL" in
+            https://*) ;;
+            *) echo "ALERTS_URL doit commencer par https://"; exit 1 ;;
+          esac
+
+      # La carte, le fond et les itinéraires ne sont pas dans l'APK : l'appli les télécharge au premier lancement.
+      - name: Check data the app will download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for pair in map-latest:algeria-map.mbtiles map-latest:algeria-base.geojson.gz routes-latest:algeria-routing.bin.gz; do
+            tag=${pair%%:*}
+            file=${pair#*:}
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -qx "$file"; then
+              echo "OK : $tag/$file"
+            else
+              echo "::warning::$file absent de la Release $tag : lancez d'abord le workflow de la carte ou des itinéraires."
+            fi
+          done
+
+      - name: Download label fonts
+        shell: bash
+        run: |
+          python3 tools/fetch_glyphs.py --output android/app/src/main/assets/glyphs | tee glyph-report.txt
+          { echo '```'; cat glyph-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/tariki.keystore"
+            echo "KEYSTORE_PATH=$RUNNER_TEMP/tariki.keystore" >> "$GITHUB_ENV"
+            echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+            # Liste les noms de clés du fichier : utile si le nom ne correspond pas.
+            keytool -list -keystore "$RUNNER_TEMP/tariki.keystore" -storepass "$KEYSTORE_PASSWORD" | grep -i "entry" || true
+            echo "Clé de signature fixe : les mises à jour par-dessus l'appli installée fonctionneront."
+          else
+            echo "::warning::Secrets KEYSTORE_BASE64 / KEYSTORE_PASSWORD absents : cet APK ne pourra pas se mettre à jour par-dessus une version déjà installée."
+          fi
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          releases="https://github.com/$GITHUB_REPOSITORY/releases/download"
+          gradle assembleDebug --no-daemon --stacktrace \
+            -PalertsUrl="$ALERTS_URL" \
+            -PmapUrl="$releases/map-latest/algeria-map.mbtiles" \
+            -PbaseUrl="$releases/map-latest/algeria-base.geojson.gz" \
+            -ProutingUrl="$releases/routes-latest/algeria-routing.bin.gz" \
+            -PversionCodeOverride="$GITHUB_RUN_NUMBER"
+
+      - name: Check APK content
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          ls -l "$APK"
+          for entry in assets/style.json assets/glyphs/NotoSans-Regular/0-255.pbf; do
+            unzip -l "$APK" | grep -q "$entry" || { echo "Manquant dans l'APK : $entry"; exit 1; }
+          done
+          echo "Contenu de l'APK vérifié"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tariki-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
