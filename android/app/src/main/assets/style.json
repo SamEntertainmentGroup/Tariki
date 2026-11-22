@@ -1,0 +1,1245 @@
+{
+  "version": 8,
+  "name": "Algeria roads",
+  "glyphs": "asset://glyphs/{fontstack}/{range}.pbf",
+  "sources": {
+    "algeria": {
+      "type": "vector",
+      "url": "{{MBTILES_URL}}"
+    },
+    "alerts": {
+      "type": "geojson",
+      "data": {
+        "type": "FeatureCollection",
+        "features": []
+      },
+      "cluster": true,
+      "clusterRadius": 55,
+      "clusterMaxZoom": 14,
+      "clusterProperties": {
+        "sum": [
+          "+",
+          [
+            "get",
+            "total"
+          ]
+        ]
+      }
+    },
+    "route": {
+      "type": "geojson",
+      "data": {
+        "type": "FeatureCollection",
+        "features": []
+      }
+    },
+    "base": {
+      "type": "geojson",
+      "data": {
+        "type": "FeatureCollection",
+        "features": []
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#b8d7ea"
+      }
+    },
+    {
+      "id": "base-land",
+      "type": "fill",
+      "source": "base",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "land"
+      ],
+      "paint": {
+        "fill-color": "#e3e0d9"
+      }
+    },
+    {
+      "id": "base-dz-area",
+      "type": "fill",
+      "source": "base",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "dz_area"
+      ],
+      "paint": {
+        "fill-color": "#b8d7ea"
+      }
+    },
+    {
+      "id": "base-dz-land",
+      "type": "fill",
+      "source": "base",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "dz_land"
+      ],
+      "paint": {
+        "fill-color": "#efece6"
+      }
+    },
+    {
+      "id": "base-borders",
+      "type": "line",
+      "source": "base",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "border"
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#a39b8e",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          0.8,
+          10,
+          1.6
+        ],
+        "line-dasharray": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "id": "base-labels",
+      "type": "symbol",
+      "source": "base",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "label"
+      ],
+      "maxzoom": 9,
+      "layout": {
+        "text-field": "{{TEXT_FIELD}}",
+        "text-font": [
+          "NotoSans-Regular"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          12,
+          8,
+          16
+        ],
+        "text-letter-spacing": 0.05,
+        "symbol-sort-key": [
+          "get",
+          "rank"
+        ]
+      },
+      "paint": {
+        "text-color": "#7d766b",
+        "text-halo-color": "#f4f2ee",
+        "text-halo-width": 1.5
+      }
+    },
+    {
+      "id": "coast",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "coast",
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#6f9fc0",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          0.8,
+          10,
+          1.4,
+          14,
+          2
+        ]
+      }
+    },
+    {
+      "id": "border-8",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "borders",
+      "minzoom": 10,
+      "filter": [
+        "==",
+        [
+          "get",
+          "level"
+        ],
+        8
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#b5ad9e",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          10,
+          0.5,
+          14,
+          1
+        ],
+        "line-dasharray": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "id": "border-4",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "borders",
+      "minzoom": 6,
+      "filter": [
+        "==",
+        [
+          "get",
+          "level"
+        ],
+        4
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#8d8272",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          0.6,
+          10,
+          1.2,
+          14,
+          1.8
+        ],
+        "line-dasharray": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "id": "border-2",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "borders",
+      "minzoom": 4,
+      "filter": [
+        "==",
+        [
+          "get",
+          "level"
+        ],
+        2
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#5c5246",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          1.2,
+          10,
+          2,
+          14,
+          3
+        ]
+      }
+    },
+    {
+      "id": "road-casing-minor",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "minor"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#777064",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          12,
+          2.0,
+          14,
+          3.4,
+          16,
+          6.4,
+          18,
+          11.4
+        ]
+      }
+    },
+    {
+      "id": "road-casing-tertiary",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "tertiary"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#8c8579",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          11,
+          2.2,
+          13,
+          3.4,
+          14,
+          5.2,
+          16,
+          8.4,
+          18,
+          14.4
+        ]
+      }
+    },
+    {
+      "id": "road-casing-secondary",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "secondary"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#c9b97a",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          9,
+          2.2,
+          11,
+          3.0,
+          12,
+          3.9,
+          14,
+          6.4,
+          16,
+          10.4,
+          18,
+          18.4
+        ]
+      }
+    },
+    {
+      "id": "road-casing-primary",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "primary"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#c99a3f",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          7,
+          2.2,
+          10,
+          3.4,
+          12,
+          4.9,
+          14,
+          7.4,
+          16,
+          12.4,
+          18,
+          21.4
+        ]
+      }
+    },
+    {
+      "id": "road-casing-trunk",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "trunk"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#c27a35",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          5,
+          2.4,
+          8,
+          3.0,
+          10,
+          4.0,
+          12,
+          5.9,
+          14,
+          8.4,
+          16,
+          13.4,
+          18,
+          23.4
+        ]
+      }
+    },
+    {
+      "id": "road-casing-motorway",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "motorway"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#b8554a",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          5,
+          2.6,
+          8,
+          3.4,
+          10,
+          4.4,
+          12,
+          6.4,
+          14,
+          9.4,
+          16,
+          15.4,
+          18,
+          27.4
+        ]
+      }
+    },
+    {
+      "id": "road-fill-minor",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "minor"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          12,
+          0.6,
+          14,
+          2,
+          16,
+          5,
+          18,
+          10
+        ]
+      }
+    },
+    {
+      "id": "road-fill-tertiary",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "tertiary"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          11,
+          0.8,
+          13,
+          2,
+          14,
+          3.8,
+          16,
+          7,
+          18,
+          13
+        ]
+      }
+    },
+    {
+      "id": "road-fill-secondary",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "secondary"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#fbe9a6",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          9,
+          0.8,
+          11,
+          1.6,
+          12,
+          2.5,
+          14,
+          5,
+          16,
+          9,
+          18,
+          17
+        ]
+      }
+    },
+    {
+      "id": "road-fill-primary",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "primary"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#f9c76b",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          7,
+          0.8,
+          10,
+          2,
+          12,
+          3.5,
+          14,
+          6,
+          16,
+          11,
+          18,
+          20
+        ]
+      }
+    },
+    {
+      "id": "road-fill-trunk",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "trunk"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#f5a35c",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          5,
+          1,
+          8,
+          1.6,
+          10,
+          2.6,
+          12,
+          4.5,
+          14,
+          7,
+          16,
+          12,
+          18,
+          22
+        ]
+      }
+    },
+    {
+      "id": "road-fill-motorway",
+      "type": "line",
+      "source": "algeria",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "motorway"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#ef7b6a",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          5,
+          1.2,
+          8,
+          2,
+          10,
+          3,
+          12,
+          5,
+          14,
+          8,
+          16,
+          14,
+          18,
+          26
+        ]
+      }
+    },
+    {
+      "id": "road-ref",
+      "type": "symbol",
+      "source": "algeria",
+      "source-layer": "roads",
+      "minzoom": 9,
+      "filter": [
+        "all",
+        [
+          "has",
+          "ref"
+        ],
+        [
+          "in",
+          "class",
+          "motorway",
+          "trunk",
+          "primary",
+          "secondary"
+        ]
+      ],
+      "layout": {
+        "symbol-placement": "line",
+        "symbol-spacing": 300,
+        "text-field": [
+          "get",
+          "ref"
+        ],
+        "text-font": [
+          "NotoSans-Regular"
+        ],
+        "text-size": 11
+      },
+      "paint": {
+        "text-color": "#555555",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1.2
+      }
+    },
+    {
+      "id": "places-city",
+      "type": "symbol",
+      "source": "algeria",
+      "source-layer": "places",
+      "minzoom": 4,
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "city"
+      ],
+      "layout": {
+        "text-field": "{{TEXT_FIELD}}",
+        "text-font": [
+          "NotoSans-Regular"
+        ],
+        "text-size": 14,
+        "text-max-width": 9,
+        "text-anchor": "center",
+        "text-allow-overlap": false,
+        "text-ignore-placement": false,
+        "symbol-sort-key": [
+          "-",
+          [
+            "to-number",
+            [
+              "coalesce",
+              [
+                "get",
+                "population"
+              ],
+              0
+            ]
+          ]
+        ],
+        "text-padding": 6
+      },
+      "paint": {
+        "text-color": "#202020",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 2.0,
+        "text-halo-blur": 0.2
+      }
+    },
+    {
+      "id": "places-town",
+      "type": "symbol",
+      "source": "algeria",
+      "source-layer": "places",
+      "minzoom": 9,
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "town"
+      ],
+      "layout": {
+        "text-field": "{{TEXT_FIELD}}",
+        "text-font": [
+          "NotoSans-Regular"
+        ],
+        "text-size": 13,
+        "text-max-width": 10,
+        "text-anchor": "center",
+        "text-allow-overlap": false,
+        "text-ignore-placement": false,
+        "symbol-sort-key": [
+          "-",
+          [
+            "to-number",
+            [
+              "coalesce",
+              [
+                "get",
+                "population"
+              ],
+              0
+            ]
+          ]
+        ],
+        "text-padding": 12
+      },
+      "paint": {
+        "text-color": "#202020",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 2.0,
+        "text-halo-blur": 0.2
+      }
+    },
+    {
+      "id": "places-village",
+      "type": "symbol",
+      "source": "algeria",
+      "source-layer": "places",
+      "minzoom": 12,
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "village"
+      ],
+      "layout": {
+        "text-field": "{{TEXT_FIELD}}",
+        "text-font": [
+          "NotoSans-Regular"
+        ],
+        "text-size": 11,
+        "text-max-width": 10,
+        "text-anchor": "center",
+        "text-allow-overlap": false,
+        "text-ignore-placement": false,
+        "symbol-sort-key": [
+          "-",
+          [
+            "to-number",
+            [
+              "coalesce",
+              [
+                "get",
+                "population"
+              ],
+              0
+            ]
+          ]
+        ],
+        "text-padding": 12
+      },
+      "paint": {
+        "text-color": "#202020",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 2.0,
+        "text-halo-blur": 0.2
+      }
+    },
+    {
+      "id": "places-suburb",
+      "type": "symbol",
+      "source": "algeria",
+      "source-layer": "places",
+      "minzoom": 14,
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "suburb"
+      ],
+      "layout": {
+        "text-field": "{{TEXT_FIELD}}",
+        "text-font": [
+          "NotoSans-Regular"
+        ],
+        "text-size": 11,
+        "text-max-width": 10,
+        "text-anchor": "center",
+        "text-allow-overlap": false,
+        "text-ignore-placement": false,
+        "symbol-sort-key": [
+          "-",
+          [
+            "to-number",
+            [
+              "coalesce",
+              [
+                "get",
+                "population"
+              ],
+              0
+            ]
+          ]
+        ],
+        "text-padding": 12
+      },
+      "paint": {
+        "text-color": "#202020",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 2.0,
+        "text-halo-blur": 0.2
+      }
+    },
+    {
+      "id": "places-hamlet",
+      "type": "symbol",
+      "source": "algeria",
+      "source-layer": "places",
+      "minzoom": 15,
+      "filter": [
+        "==",
+        [
+          "get",
+          "class"
+        ],
+        "hamlet"
+      ],
+      "layout": {
+        "text-field": "{{TEXT_FIELD}}",
+        "text-font": [
+          "NotoSans-Regular"
+        ],
+        "text-size": 11,
+        "text-max-width": 10,
+        "text-anchor": "center",
+        "text-allow-overlap": false,
+        "text-ignore-placement": false,
+        "symbol-sort-key": [
+          "-",
+          [
+            "to-number",
+            [
+              "coalesce",
+              [
+                "get",
+                "population"
+              ],
+              0
+            ]
+          ]
+        ],
+        "text-padding": 12
+      },
+      "paint": {
+        "text-color": "#202020",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 2.0,
+        "text-halo-blur": 0.2
+      }
+    },
+    {
+      "id": "route-casing",
+      "type": "line",
+      "source": "route",
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          5,
+          6,
+          10,
+          10,
+          14,
+          15
+        ]
+      }
+    },
+    {
+      "id": "route-line",
+      "type": "line",
+      "source": "route",
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#1a73e8",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          5,
+          3.5,
+          10,
+          6,
+          14,
+          9
+        ]
+      }
+    },
+    {
+      "id": "alerts-cluster",
+      "type": "circle",
+      "source": "alerts",
+      "filter": [
+        "has",
+        "point_count"
+      ],
+      "paint": {
+        "circle-radius": 28,
+        "circle-color": "#ffffff",
+        "circle-stroke-width": 1.5,
+        "circle-stroke-color": "rgba(0,0,0,0.28)"
+      }
+    },
+    {
+      "id": "alerts-cluster-ring",
+      "type": "circle",
+      "source": "alerts",
+      "filter": [
+        "has",
+        "point_count"
+      ],
+      "paint": {
+        "circle-radius": 24,
+        "circle-color": "#ff6d00"
+      }
+    },
+    {
+      "id": "alerts-cluster-core",
+      "type": "circle",
+      "source": "alerts",
+      "filter": [
+        "has",
+        "point_count"
+      ],
+      "paint": {
+        "circle-radius": 18,
+        "circle-color": "#ffffff"
+      }
+    },
+    {
+      "id": "alerts-cluster-count",
+      "type": "symbol",
+      "source": "alerts",
+      "filter": [
+        "has",
+        "point_count"
+      ],
+      "layout": {
+        "text-field": [
+          "to-string",
+          [
+            "coalesce",
+            [
+              "get",
+              "sum"
+            ],
+            [
+              "get",
+              "point_count"
+            ]
+          ]
+        ],
+        "text-font": [
+          "NotoSans-Regular"
+        ],
+        "text-size": 20,
+        "text-allow-overlap": true,
+        "text-ignore-placement": true
+      },
+      "paint": {
+        "text-color": "#c43e00"
+      }
+    },
+    {
+      "id": "alerts",
+      "type": "symbol",
+      "source": "alerts",
+      "filter": [
+        "!",
+        [
+          "has",
+          "point_count"
+        ]
+      ],
+      "layout": {
+        "icon-image": [
+          "get",
+          "icon"
+        ],
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true
+      }
+    }
+  ]
+}

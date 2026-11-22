@@ -1,0 +1,34 @@
+Tariki v1.0
+
+Interface
+- Menu ☰ : loupe (toujours en haut), chat, musique, aide, AR/FR ; boutons de la même couleur foncée.
+- Fenêtres de signalement aérées ; étiquette Danger sur la route en jaune clair.
+- Fenêtre d'aide (?) avec le bouton Nous contacter.
+- Autorisations au démarrage : GPS obligatoire, notifications et batterie facultatives.
+- La langue AR/FR est gardée d'un lancement à l'autre.
+
+Carte
+- Carte, fond et itinéraires téléchargés au premier lancement (environ 150 Mo, reprise si coupure). APK d'environ 25 Mo.
+- Mer en bleu, pays voisins en gris avec leur nom, terres algériennes précises (Natural Earth et OpenStreetMap).
+
+Itinéraire
+- Départ depuis la position GPS, tracé effacé derrière la voiture, recalcul automatique hors du tracé.
+- Recherche : 16 - Bouira - البويرة, noms sans accents ; ✕ bleu pour annuler.
+
+Signalements
+- Un seul type : danger sur la route, avec description et photo facultatives.
+- Description et photo visibles seulement après validation dans le plugin ; miniatures dans la fenêtre de détail.
+
+Nouveau
+- Chat entre voyageurs par Bluetooth (sans internet, 24 h, répondre, masquer, signaler), modéré dans le plugin.
+- Musique hors ligne par genres, ajoutée dans le plugin.
+- Messages de contact envoyés au plugin.
+
+Serveur
+- Plugin DZ Trafic Alerts 2.0 avec les onglets Signalements, Commentaires, Photos, Chat, Contacts et Musique.
+
+Vérifications faites
+- Tests Python des outils (carte, fond, itinéraires, wilayas, style).
+- Code Kotlin de l'appli compilé ici avec le compilateur Kotlin et la bibliothèque Android 36 ; MapLibre et androidx remplacés par des copies de leurs signatures, vérifiées dans les sources de MapLibre 13.6.1.
+- Plugin : syntaxe PHP, et actions de l'appli testées sur un faux WordPress avec une base SQLite (24 vérifications), rendu des 6 onglets d'administration.
+- La compilation Android complète (ressources, manifeste, empaquetage) reste à valider par le workflow GitHub.
