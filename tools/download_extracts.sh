@@ -27,5 +27,11 @@ for country in $COUNTRIES; do
   fi
 done
 
-osmium merge --overwrite --output work/region.osm.pbf $(for country in $COUNTRIES; do echo "work/$country.osm.pbf"; done)
+# Les pays ne sont pas mis à jour à la même heure : un objet commun (frontière, route qui la traverse)
+# peut exister en deux versions. La fusion les garde toutes, comme un fichier d'historique (.osh.pbf),
+# puis time-filter ne garde que la version actuelle de chaque objet.
+osmium merge --overwrite --with-history --output work/region.osh.pbf \
+  $(for country in $COUNTRIES; do echo "work/$country.osm.pbf"; done)
+osmium time-filter --overwrite --output work/region.osm.pbf work/region.osh.pbf
+rm -f work/region.osh.pbf
 ls -l work/*.osm.pbf
