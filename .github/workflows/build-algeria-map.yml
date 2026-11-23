@@ -94,13 +94,17 @@ jobs:
           # Terres découpées par le contour de l'Algérie et de la Tunisie : OpenStreetMap (côte précise) ou, à défaut, Natural Earth.
           land=work/land-polygons-split-4326/land_polygons.shp
           [ -f "$land" ] || land=work/ne_10m_land.geojson
-          ogr2ogr -f GeoJSON -spat -9.5 18.5 12.5 38.5 -clipsrc work/dz-area.geojson \
-            -simplify 0.0002 -lco COORDINATE_PRECISION=5 -nlt PROMOTE_TO_MULTI \
-            work/dz-land.geojson "$land"
+          # Un pays à la fois : leurs contours se chevauchent un peu le long de la frontière.
+          for country in DZ TN; do
+            ogr2ogr -f GeoJSON -spat -9.5 18.5 12.5 38.5 -makevalid \
+              -clipsrc work/dz-area.geojson -clipsrcwhere "country = '$country'" \
+              -simplify 0.0002 -lco COORDINATE_PRECISION=5 -nlt PROMOTE_TO_MULTI \
+              "work/land-$country.geojson" "$land"
+          done
           # Terres de la région (Natural Earth), simplifiées : les pays voisins.
           ogr2ogr -f GeoJSON -clipsrc -30 0 35 52 -simplify 0.005 -lco COORDINATE_PRECISION=4 -nlt PROMOTE_TO_MULTI \
             work/ne-land.geojson work/ne_10m_land.geojson
-          python3 tools/build_base_layer.py assemble --area work/dz-area.geojson --dz-land work/dz-land.geojson \
+          python3 tools/build_base_layer.py assemble --area work/dz-area.geojson --dz-land work/land-DZ.geojson work/land-TN.geojson \
             --ne-land work/ne-land.geojson --ne-borders work/ne_10m_admin_0_boundary_lines_land.geojson \
             --ne-disputed work/ne_10m_admin_0_boundary_lines_disputed_areas.geojson \
             --ne-countries work/ne_10m_admin_0_countries.geojson --output out/algeria-base.geojson.gz \
