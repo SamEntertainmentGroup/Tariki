@@ -76,10 +76,6 @@ def country_code(properties):
     return str(properties.get("ISO3166-1") or properties.get("ISO3166-1:alpha2") or "").strip().upper()
 
 
-def is_covered(properties):
-    return country_code(properties) in COVERED_COUNTRIES
-
-
 def simplify(ring, step=SIMPLIFY_DEGREES):
     kept = [ring[0]]
     for point in ring[1:-1]:

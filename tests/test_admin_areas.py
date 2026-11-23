@@ -48,11 +48,10 @@ class WilayaTest(unittest.TestCase):
         self.assertEqual(finder.find(4, 33), 16)
         self.assertEqual(finder.codes, {16})
 
-    def test_covered_countries(self):
-        self.assertTrue(aa.is_covered({"admin_level": "2", "ISO3166-1": "DZ"}))
-        self.assertTrue(aa.is_covered({"admin_level": "2", "ISO3166-1:alpha2": "TN"}))
-        self.assertFalse(aa.is_covered({"admin_level": "2", "ISO3166-1": "MA"}))
-        self.assertFalse(aa.is_covered({"admin_level": "4", "ISO3166-1": "DZ"}))
+    def test_country_code(self):
+        self.assertEqual(aa.country_code({"admin_level": "2", "ISO3166-1": "DZ"}), "DZ")
+        self.assertEqual(aa.country_code({"admin_level": "2", "ISO3166-1:alpha2": "tn"}), "TN")
+        self.assertEqual(aa.country_code({"admin_level": "4", "ISO3166-1": "DZ"}), "")
 
 
 if __name__ == "__main__":

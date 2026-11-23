@@ -584,12 +584,13 @@ class MainActivity : Activity() {
             contentDescription = "Voyageurs proches"
             isClickable = true
             setOnClickListener { openScreen(ChatActivity::class.java) }
-            // La silhouette, avec le petit symbole Bluetooth en haut à droite de la tête.
+            // La silhouette au centre ; le cadre est aussi large des deux côtés pour que le petit symbole
+            // Bluetooth, à droite de la tête, ne la pousse pas.
             addView(FrameLayout(this@MainActivity).apply {
                 addView(ImageView(this@MainActivity).apply { setImageDrawable(PersonDrawable(BUTTON_DARK)) },
-                    FrameLayout.LayoutParams(dp(28), dp(28), Gravity.BOTTOM or Gravity.START))
+                    FrameLayout.LayoutParams(dp(28), dp(28), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
                 addView(travellersBluetooth, FrameLayout.LayoutParams(dp(15), dp(15), Gravity.TOP or Gravity.END))
-            }, LinearLayout.LayoutParams(dp(38), dp(30)))
+            }, LinearLayout.LayoutParams(dp(28 + 2 * 12), dp(30)))
             addView(travellersText, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = dp(4)
             })

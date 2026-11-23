@@ -2,6 +2,7 @@ package com.dztrafic.carte
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -51,21 +52,24 @@ fun Context.isOnline(): Boolean = runCatching {
     capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
 }.getOrDefault(false)
 
+/** Une ligne d'explication : titre, phrase courte, et petite icône dessinée sur la page de téléchargement. */
+data class HelpEntry(val title: String, val text: String, val icon: ((Int) -> Drawable)? = null)
+
 /** Ce que fait Tariki, en titres et phrases courtes : montré dans l'aide et sur la page de téléchargement. */
-fun helpEntries(arabic: Boolean): List<Pair<String, String>> = if (arabic) {
+fun helpEntries(arabic: Boolean): List<HelpEntry> = if (arabic) {
     listOf(
-        "خريطة بدون إنترنت" to "الخريطة والمسار يعملان في كل مكان، حتى بدون شبكة",
-        "الإبلاغ عن خطر" to "اضغط على + وسيتم تنبيه السائقين الآخرين عند الاقتراب منه",
-        "دردشة بدون إنترنت" to "تحدث مع المسافرين القريبين عبر البلوتوث",
-        "موسيقى بدون إنترنت" to "حمّلها مرة واحدة واستمع إليها في كل مكان",
-        "تطبيق مستقل" to "طريقي لا يتبع أي جهة حكومية أو رسمية",
+        HelpEntry("خريطة بدون إنترنت", "الخريطة والمسار يعملان في كل مكان، حتى بدون شبكة"),
+        HelpEntry("الإبلاغ عن خطر", "اضغط على + وسيتم تنبيه السائقين الآخرين عند الاقتراب منه"),
+        HelpEntry("دردشة بدون إنترنت", "تحدث مع المسافرين القريبين عبر البلوتوث", ::ChatDrawable),
+        HelpEntry("موسيقى بدون إنترنت", "حمّلها مرة واحدة واستمع إليها في كل مكان", ::MusicDrawable),
+        HelpEntry("تطبيق مستقل", "طريقي لا يتبع أي جهة حكومية أو رسمية"),
     )
 } else {
     listOf(
-        "Carte sans internet" to "La carte et l'itinéraire marchent partout, même sans réseau",
-        "Signaler un danger" to "Appuie sur + et les autres conducteurs sont prévenus en approchant",
-        "Chat sans internet" to "Discute avec les voyageurs proches par Bluetooth",
-        "Musique sans internet" to "Télécharge une fois et écoute partout",
-        "Application indépendante" to "Tariki ne dépend d'aucun organisme gouvernemental ou officiel",
+        HelpEntry("Carte sans internet", "La carte et l'itinéraire marchent partout, même sans réseau"),
+        HelpEntry("Signaler un danger", "Appuie sur + et les autres conducteurs sont prévenus en approchant"),
+        HelpEntry("Chat sans internet", "Discute avec les voyageurs proches par Bluetooth", ::ChatDrawable),
+        HelpEntry("Musique sans internet", "Télécharge une fois et écoute partout", ::MusicDrawable),
+        HelpEntry("Application indépendante", "Tariki ne dépend d'aucun organisme gouvernemental ou officiel"),
     )
 }

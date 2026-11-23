@@ -13,7 +13,9 @@ Le fichier produit (algeria-base.geojson.gz) est téléchargé par l'appli et de
   - label : nom des pays, en arabe et en français.
 
 Deux étapes, avec ogr2ogr entre les deux (voir le workflow de la carte) :
-  area     : écrit le contour des pays couverts (sert à découper les terres OpenStreetMap) ;
+  area     : écrit le contour de chaque pays couvert (sert à découper les terres OpenStreetMap). Un contour
+             par pays : réunis, ils se chevauchent un peu le long de la frontière et ogr2ogr perd les carrés
+             de terre qui touchent les deux pays ;
   assemble : réunit tous les morceaux dans un seul fichier compressé.
 """
 import argparse
@@ -24,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from admin_areas import is_covered, iter_features, polygons_of, simplify, wound  # noqa: E402
+from admin_areas import COVERED_COUNTRIES, country_code, iter_features, polygons_of, simplify, wound  # noqa: E402
 
 # Région couverte par le fond (ouest, sud, est, nord) : les pays couverts et leurs voisins.
 REGION = (-30.0, 0.0, 35.0, 52.0)
@@ -50,16 +52,22 @@ def rounded_rings(rings, counter_clockwise_outer=True):
     return result
 
 
-def covered_area(features):
-    """Contour des pays couverts (mer territoriale comprise) en MultiPolygon, ou None s'il manque."""
-    polygons = []
+def covered_areas(features):
+    """Contour de chaque pays couvert (mer territoriale comprise) en MultiPolygon, par code pays."""
+    areas = {}
     for feature in features:
-        if not is_covered(feature.get("properties") or {}):
+        code = country_code(feature.get("properties") or {})
+        if code not in COVERED_COUNTRIES:
             continue
         for rings in polygons_of(feature.get("geometry") or {}):
-            polygons.append(rounded_rings([simplify(ring, AREA_SIMPLIFY_DEGREES) for ring in rings]))
-    if not polygons:
-        return None
+            polygon = rounded_rings([simplify(ring, AREA_SIMPLIFY_DEGREES) for ring in rings])
+            areas.setdefault(code, []).append(polygon)
+    return {code: {"type": "MultiPolygon", "coordinates": polygons} for code, polygons in areas.items()}
+
+
+def joined_area(features):
+    """Tous les contours de pays dans un seul MultiPolygon (le dz_area dessiné sous les terres)."""
+    polygons = [polygon for feature in features for polygon in feature["geometry"]["coordinates"]]
     return {"type": "MultiPolygon", "coordinates": polygons}
 
 
@@ -186,7 +194,7 @@ def main():
     first.add_argument("--output", required=True, type=Path)
     second = steps.add_parser("assemble", help="réunit les morceaux dans le fichier final")
     second.add_argument("--area", required=True, type=Path)
-    second.add_argument("--dz-land", required=True, type=Path, help="terres des pays couverts (ogr2ogr)")
+    second.add_argument("--dz-land", required=True, type=Path, nargs="+", help="terres de chaque pays couvert (ogr2ogr)")
     second.add_argument("--ne-land", required=True, type=Path, help="terres Natural Earth découpées")
     second.add_argument("--ne-borders", required=True, type=Path)
     second.add_argument("--ne-disputed", required=True, type=Path, help="limites des zones disputées")
@@ -195,19 +203,22 @@ def main():
     args = parser.parse_args()
 
     if args.step == "area":
-        area = covered_area(iter_features(args.admin))
-        if area is None:
-            print("ÉCHEC : contour des pays couverts introuvable dans les données", file=sys.stderr)
+        areas = covered_areas(iter_features(args.admin))
+        missing = [code for code in COVERED_COUNTRIES if code not in areas]
+        if missing:
+            print(f"ÉCHEC : contour introuvable dans les données pour {', '.join(missing)}", file=sys.stderr)
             return 1
-        collection = {"type": "FeatureCollection",
-                      "features": [{"type": "Feature", "properties": {}, "geometry": area}]}
+        collection = {"type": "FeatureCollection", "features": [
+            {"type": "Feature", "properties": {"country": code}, "geometry": area} for code, area in areas.items()
+        ]}
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(collection, separators=(",", ":")), encoding="utf-8")
-        print(f"Contour des pays couverts : {len(area['coordinates'])} polygones, {args.output.stat().st_size / 1000:.0f} Ko")
+        counts = ", ".join(f"{code} {len(area['coordinates'])}" for code, area in areas.items())
+        print(f"Contour des pays couverts (polygones) : {counts}, {args.output.stat().st_size / 1000:.0f} Ko")
         return 0
 
-    area = load_collection(args.area)[0]["geometry"]
-    collection = assemble(area, load_collection(args.dz_land), load_collection(args.ne_land),
+    dz_land = [feature for path in args.dz_land for feature in load_collection(path)]
+    collection = assemble(joined_area(load_collection(args.area)), dz_land, load_collection(args.ne_land),
                           load_collection(args.ne_borders), load_collection(args.ne_disputed),
                           load_collection(args.ne_countries))
     kinds = {}

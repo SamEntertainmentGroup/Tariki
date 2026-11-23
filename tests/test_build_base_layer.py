@@ -33,18 +33,24 @@ def write_collection(path, features):
 
 
 class CoveredAreaTest(unittest.TestCase):
-    def test_algeria_and_tunisia_are_kept_with_outer_rings_counter_clockwise(self):
-        area = bb.covered_area([MOROCCO, TUNISIA, ALGERIA])
-        self.assertEqual(area["type"], "MultiPolygon")
-        self.assertEqual(len(area["coordinates"]), 2)
-        for polygon in area["coordinates"]:
-            self.assertGreater(aa.signed_area(polygon[0]), 0)
-        self.assertIsNone(bb.covered_area([MOROCCO]))
+    def test_one_area_per_covered_country_with_outer_rings_counter_clockwise(self):
+        areas = bb.covered_areas([MOROCCO, TUNISIA, ALGERIA])
+        self.assertEqual(sorted(areas), ["DZ", "TN"])
+        for area in areas.values():
+            self.assertEqual(area["type"], "MultiPolygon")
+            self.assertEqual(len(area["coordinates"]), 1)
+            self.assertGreater(aa.signed_area(area["coordinates"][0][0]), 0)
+        self.assertEqual(bb.covered_areas([MOROCCO]), {})
+
+    def test_joined_area_keeps_every_country(self):
+        areas = bb.covered_areas([TUNISIA, ALGERIA])
+        features = [{"type": "Feature", "properties": {"country": code}, "geometry": area} for code, area in areas.items()]
+        self.assertEqual(len(bb.joined_area(features)["coordinates"]), 2)
 
 
 class AssembleTest(unittest.TestCase):
     def test_layers_order_borders_and_labels(self):
-        area = bb.covered_area([ALGERIA])
+        area = bb.covered_areas([ALGERIA])["DZ"]
         dz_land = [feature("Polygon", [square(-8, 19, 12, 36.5)])]
         ne_land = [feature("Polygon", [square(-17, 11, 19, 41)]), feature("Polygon", [square(100, 0, 101, 1)])]
         borders = [
@@ -80,17 +86,21 @@ class AssembleTest(unittest.TestCase):
     def test_command_line_writes_gzip(self):
         with tempfile.TemporaryDirectory() as folder:
             folder = Path(folder)
-            write_lines(folder / "admin", [ALGERIA])
+            write_lines(folder / "admin", [ALGERIA, TUNISIA])
             argv = sys.argv
             try:
                 sys.argv = ["x", "area", "--admin", str(folder / "admin"), "--output", str(folder / "dz.geojson")]
                 self.assertEqual(bb.main(), 0)
+                countries = [f["properties"]["country"] for f in json.loads((folder / "dz.geojson").read_text())["features"]]
+                self.assertEqual(sorted(countries), ["DZ", "TN"])
                 write_collection(folder / "dz-land", [feature("Polygon", [square(-8, 19, 12, 36.5)])])
+                write_collection(folder / "tn-land", [feature("Polygon", [square(8, 31, 11, 37)])])
                 write_collection(folder / "ne-land", [feature("Polygon", [square(-17, 11, 19, 41)])])
                 write_collection(folder / "borders", [])
                 write_collection(folder / "disputed", [])
                 write_collection(folder / "countries", [])
-                sys.argv = ["x", "assemble", "--area", str(folder / "dz.geojson"), "--dz-land", str(folder / "dz-land"),
+                sys.argv = ["x", "assemble", "--area", str(folder / "dz.geojson"),
+                            "--dz-land", str(folder / "dz-land"), str(folder / "tn-land"),
                             "--ne-land", str(folder / "ne-land"), "--ne-borders", str(folder / "borders"),
                             "--ne-disputed", str(folder / "disputed"),
                             "--ne-countries", str(folder / "countries"), "--output", str(folder / "out" / "base.geojson.gz")]
@@ -98,7 +108,20 @@ class AssembleTest(unittest.TestCase):
             finally:
                 sys.argv = argv
             data = json.loads(gzip.decompress((folder / "out" / "base.geojson.gz").read_bytes()))
-            self.assertEqual(data["type"], "FeatureCollection")
+            kinds = [f["properties"]["kind"] for f in data["features"]]
+            self.assertEqual(kinds.count("dz_land"), 2)
+            self.assertEqual(len(next(f for f in data["features"] if f["properties"]["kind"] == "dz_area")["geometry"]["coordinates"]), 2)
+
+    def test_area_step_fails_when_a_covered_country_is_missing(self):
+        with tempfile.TemporaryDirectory() as folder:
+            folder = Path(folder)
+            write_lines(folder / "admin", [ALGERIA])
+            argv = sys.argv
+            try:
+                sys.argv = ["x", "area", "--admin", str(folder / "admin"), "--output", str(folder / "dz.geojson")]
+                self.assertEqual(bb.main(), 1)
+            finally:
+                sys.argv = argv
 
     def test_missing_covered_land_fails(self):
         with tempfile.TemporaryDirectory() as folder:

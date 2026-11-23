@@ -8,6 +8,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -61,9 +62,22 @@ class SetupActivity : Activity(), OfflineData.Listener {
         page.addView(noticeText("لكي يعمل التطبيق بدون إنترنت، يجب تحميل خريطة الجزائر وتونس مرة واحدة", 17f, TEXT_DARK, top = 44))
         page.addView(noticeText("Pour fonctionner sans internet, Tariki télécharge une fois la carte de l'Algérie et de la Tunisie", 15f, TEXT_SOFT, top = 6))
         // Ce que fait l'appli, comme dans l'aide, dans la langue du téléphone.
-        helpEntries(arabic).forEachIndexed { index, (title, explanation) ->
-            page.addView(noticeText(title, 16f, TEXT_DARK, bold = true, top = if (index == 0) 30 else 14))
-            page.addView(noticeText(explanation, 14f, TEXT_SOFT, top = 2))
+        helpEntries(arabic).forEachIndexed { index, entry ->
+            val title = noticeText(entry.title, 16f, TEXT_DARK, bold = true)
+            // L'icône se place au début du titre : à gauche en français, à droite en arabe.
+            page.addView(LinearLayout(this).apply {
+                gravity = Gravity.CENTER
+                layoutDirection = View.LAYOUT_DIRECTION_LTR
+                setPadding(0, dp(if (index == 0) 30 else 14), 0, 0)
+                val icon = entry.icon?.let { draw ->
+                    ImageView(this@SetupActivity).apply { setImageDrawable(draw(BUTTON_DARK)) }
+                }
+                val iconParams = LinearLayout.LayoutParams(dp(20), dp(20)).apply { setMargins(dp(8), 0, dp(8), 0) }
+                if (icon != null && !arabic) addView(icon, iconParams)
+                addView(title)
+                if (icon != null && arabic) addView(icon, iconParams)
+            })
+            page.addView(noticeText(entry.text, 14f, TEXT_SOFT, top = 2))
         }
         startButton = Button(this).apply {
             isAllCaps = false

@@ -39,9 +39,10 @@ object OfflineData {
 
     /**
      * Version des données attendue par l'appli. Des fichiers d'une autre version (anciens essais, format
-     * changé ou pays ajouté) sont effacés et téléchargés de nouveau. 2 : ajout de la Tunisie.
+     * changé, pays ajouté ou fond de carte corrigé) sont effacés et téléchargés de nouveau.
+     * 2 : ajout de la Tunisie. 3 : terres de la frontière algéro-tunisienne corrigées.
      */
-    private const val DATA_VERSION = 2
+    private const val DATA_VERSION = 3
     private const val KEY_DATA_VERSION = "offline_data_version"
     private const val BUFFER_BYTES = 64 * 1024
     private const val TIMEOUT_MS = 30_000
