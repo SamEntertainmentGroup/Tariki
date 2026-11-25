@@ -1,4 +1,5 @@
 name: Build Android APK
+# Fabrique l'APK à installer pour les tests et l'AAB à envoyer sur le Play Store, signés avec la même clé.
 
 on:
   workflow_dispatch:
@@ -7,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  ALERTS_URL: https://jarti.app/wp-admin/admin-ajax.php
+  ALERTS_URL: https://tariki.app/wp-admin/admin-ajax.php
 
 jobs:
   apk:
@@ -72,38 +73,52 @@ jobs:
             echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
             echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
             echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
-            # Liste les noms de clés du fichier : utile si le nom ne correspond pas.
-            keytool -list -keystore "$RUNNER_TEMP/tariki.keystore" -storepass "$KEYSTORE_PASSWORD" | grep -i "entry" || true
-            echo "Clé de signature fixe : les mises à jour par-dessus l'appli installée fonctionneront."
+            # Liste les noms de clés du fichier et l'empreinte SHA1, à comparer avec la Play Console
+            # (Intégrité de l'application, certificat de la clé d'importation).
+            keytool -list -v -keystore "$RUNNER_TEMP/tariki.keystore" -storepass "$KEYSTORE_PASSWORD" | grep -iE "alias|SHA1" || true
           else
-            echo "::warning::Secrets KEYSTORE_BASE64 / KEYSTORE_PASSWORD absents : cet APK ne pourra pas se mettre à jour par-dessus une version déjà installée."
+            echo "::error::Secrets KEYSTORE_BASE64 / KEYSTORE_PASSWORD absents : sans la clé d'envoi, le Play Store refuse l'AAB."
+            exit 1
           fi
 
-      - name: Build debug APK
+      - name: Build APK and AAB
         working-directory: android
         run: |
           releases="https://github.com/$GITHUB_REPOSITORY/releases/download"
-          gradle assembleDebug --no-daemon --stacktrace \
+          # Le Play Store a déjà le versionCode 6 (version de test) : on part de 100.
+          version_code=$((100 + GITHUB_RUN_NUMBER))
+          echo "versionCode : $version_code" >> "$GITHUB_STEP_SUMMARY"
+          gradle assembleRelease bundleRelease --no-daemon --stacktrace \
             -PalertsUrl="$ALERTS_URL" \
             -PmapUrl="$releases/map-latest/algeria-map.mbtiles" \
             -PbaseUrl="$releases/map-latest/algeria-base.geojson.gz" \
             -ProutingUrl="$releases/routes-latest/algeria-routing.bin.gz" \
-            -PversionCodeOverride="$GITHUB_RUN_NUMBER"
+            -PversionCodeOverride="$version_code"
 
       - name: Check APK content
         run: |
-          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          APK=android/app/build/outputs/apk/release/app-release.apk
           ls -l "$APK"
           for entry in assets/style.json assets/glyphs/NotoSans-Regular/0-255.pbf; do
             unzip -l "$APK" | grep -q "$entry" || { echo "Manquant dans l'APK : $entry"; exit 1; }
           done
           echo "Contenu de l'APK vérifié"
+          ls -l android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: tariki-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload AAB (Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: tariki-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
