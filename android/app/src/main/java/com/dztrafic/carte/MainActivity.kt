@@ -230,7 +230,9 @@ class MainActivity : Activity() {
         mapView = MapView(this)
         mapView.onCreate(savedInstanceState)
         mapView.addOnDidFailLoadingMapListener { message -> showStatus("Erreur carte : $message") }
-        setContentView(buildLayout())
+        val root = buildLayout()
+        setContentView(root)
+        fitSystemBars(root)
         if (hasFineLocation()) onLocationReady()
         if (!allOk()) showPermissionDialog()
         prepareMap()
@@ -1618,9 +1620,10 @@ class MainActivity : Activity() {
             }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
         content.addView(TextView(this).apply {
-            text = "© OpenStreetMap contributors (ODbL) · Natural Earth"
-            textSize = 12f
-            setTextColor(TEXT_SOFT)
+            // Mention exigée par la licence de la carte (ODbL) : à garder.
+            text = "© OpenStreetMap"
+            textSize = 11f
+            setTextColor(Color.rgb(160, 170, 165))
             gravity = Gravity.CENTER
             setPadding(0, dp(18), 0, 0)
         })

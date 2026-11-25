@@ -14,23 +14,25 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.dztrafic.carte"
+        // Nom de l'appli sur le Play Store (elle remplace la première version de test, faite en TWA).
+        applicationId = "app.tariki.twa"
         minSdk = 24
-        targetSdk = 34
-        versionCode = providers.gradleProperty("versionCodeOverride").map { it.toInt() }.getOrElse(10)
+        targetSdk = 36
+        // Sur le Play Store, le dernier versionCode de la version de test est 6 : le workflow donne 100 + n° du build.
+        versionCode = providers.gradleProperty("versionCodeOverride").map { it.toInt() }.getOrElse(100)
         versionName = "1.0"
         // Fichiers téléchargés par l'appli au premier lancement (Releases du dépôt, données par le workflow).
-        val releases = "https://github.com/Mertah/Tariki/releases/download"
+        val releases = "https://github.com/SamEntertainmentGroup/Tariki/releases/download"
         buildConfigField("String", "MAP_URL", "\"${providers.gradleProperty("mapUrl").getOrElse("$releases/map-latest/algeria-map.mbtiles")}\"")
         buildConfigField("String", "BASE_URL", "\"${providers.gradleProperty("baseUrl").getOrElse("$releases/map-latest/algeria-base.geojson.gz")}\"")
         buildConfigField("String", "ROUTING_URL", "\"${providers.gradleProperty("routingUrl").getOrElse("$releases/routes-latest/algeria-routing.bin.gz")}\"")
-        buildConfigField("String", "ALERTS_URL", "\"${providers.gradleProperty("alertsUrl").getOrElse("https://jarti.app/wp-admin/admin-ajax.php")}\"")
+        buildConfigField("String", "ALERTS_URL", "\"${providers.gradleProperty("alertsUrl").getOrElse("https://tariki.app/wp-admin/admin-ajax.php")}\"")
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
     }
 
-    // Clé de signature fixe (fournie par GitHub) : indispensable pour mettre à jour par-dessus l'appli déjà installée.
+    // Clé d'envoi du Play Store (secrets GitHub) : la même pour l'APK de test et l'AAB du Play Store.
     signingConfigs {
         if (keystorePath.isNotEmpty() && keystorePassword.isNotEmpty()) {
             create("tariki") {
@@ -44,6 +46,10 @@ android {
 
     buildTypes {
         getByName("debug") {
+            signingConfigs.findByName("tariki")?.let { signingConfig = it }
+        }
+        getByName("release") {
+            isMinifyEnabled = false
             signingConfigs.findByName("tariki")?.let { signingConfig = it }
         }
     }

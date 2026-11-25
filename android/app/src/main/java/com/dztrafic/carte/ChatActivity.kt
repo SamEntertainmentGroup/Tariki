@@ -58,7 +58,9 @@ class ChatActivity : Activity(), ChatHub.Listener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ChatHub.init(this)
-        setContentView(buildLayout())
+        val root = buildLayout()
+        setContentView(root)
+        fitSystemBars(root, withKeyboard = true)
         if (!ChatHub.hasPermissions(this)) requestPermissions(ChatHub.requiredPermissions(), PERMISSION_REQUEST)
     }
 

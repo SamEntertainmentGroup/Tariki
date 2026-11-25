@@ -136,3 +136,52 @@ class BluetoothDrawable(tint: Int) : MenuIcon(tint) {
         canvas.drawPath(rune, paint)
     }
 }
+
+/** Carte pliée en trois volets. */
+class FoldedMapDrawable(tint: Int) : MenuIcon(tint) {
+
+    private val outline = Path()
+
+    override fun drawIcon(canvas: Canvas, left: Float, top: Float, size: Float) {
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = size * 0.09f
+        val x = floatArrayOf(0.10f, 0.37f, 0.63f, 0.90f).map { left + size * it }
+        val high = top + size * 0.16f
+        val low = top + size * 0.26f
+        val bottomHigh = top + size * 0.74f
+        val bottomLow = top + size * 0.84f
+        outline.reset()
+        outline.moveTo(x[0], low)
+        outline.lineTo(x[1], high)
+        outline.lineTo(x[2], low)
+        outline.lineTo(x[3], high)
+        outline.lineTo(x[3], bottomHigh)
+        outline.lineTo(x[2], bottomLow)
+        outline.lineTo(x[1], bottomHigh)
+        outline.lineTo(x[0], bottomLow)
+        outline.close()
+        canvas.drawPath(outline, paint)
+        canvas.drawLine(x[1], high, x[1], bottomHigh, paint)
+        canvas.drawLine(x[2], low, x[2], bottomLow, paint)
+    }
+}
+
+/** Triangle d'avertissement avec un point d'exclamation. */
+class WarningDrawable(tint: Int) : MenuIcon(tint) {
+
+    private val triangle = Path()
+
+    override fun drawIcon(canvas: Canvas, left: Float, top: Float, size: Float) {
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = size * 0.09f
+        triangle.reset()
+        triangle.moveTo(left + size * 0.5f, top + size * 0.12f)
+        triangle.lineTo(left + size * 0.92f, top + size * 0.86f)
+        triangle.lineTo(left + size * 0.08f, top + size * 0.86f)
+        triangle.close()
+        canvas.drawPath(triangle, paint)
+        canvas.drawLine(left + size * 0.5f, top + size * 0.40f, left + size * 0.5f, top + size * 0.60f, paint)
+        paint.style = Paint.Style.FILL
+        canvas.drawCircle(left + size * 0.5f, top + size * 0.72f, size * 0.055f, paint)
+    }
+}

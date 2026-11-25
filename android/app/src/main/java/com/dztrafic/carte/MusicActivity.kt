@@ -56,7 +56,9 @@ class MusicActivity : Activity(), MusicLibrary.Listener, MusicPlayer.Listener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MusicLibrary.init(this)
-        setContentView(buildLayout())
+        val root = buildLayout()
+        setContentView(root)
+        fitSystemBars(root)
     }
 
     override fun onStart() {
