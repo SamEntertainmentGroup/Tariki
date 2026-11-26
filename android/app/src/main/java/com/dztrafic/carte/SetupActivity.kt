@@ -62,7 +62,7 @@ class SetupActivity : Activity(), OfflineData.Listener {
         }
         page.addView(noticeText("طريقي", 34f, ORANGE, bold = true))
         page.addView(noticeText("لكي يعمل التطبيق بدون إنترنت، يجب تحميل الخريطة مرة واحدة", 17f, TEXT_DARK, top = 44))
-        page.addView(noticeText("Pour fonctionner sans internet, Tariki télécharge une fois la carte", 15f, TEXT_SOFT, top = 6))
+        page.addView(noticeText("Pour fonctionner sans internet, Tariki télécharge une fois la carte", 15f, TEXT_SOFT, top = 16))
         // Ce que fait l'appli, comme dans l'aide, dans la langue du téléphone (seulement les lignes avec icône).
         helpEntries(arabic).filter { it.icon != null }.forEachIndexed { index, entry ->
             val title = noticeText(entry.title, 16f, TEXT_DARK, bold = true)
