@@ -212,8 +212,8 @@ class StyleTest(unittest.TestCase):
         self.assertIn("REASON_API_GESTURE", kotlin)
         self.assertIn("RECENTER_DELAY_MS", kotlin)
         # Départ sur Sétif.
-        self.assertIn("START_LATITUDE = 36.1911", kotlin)
-        self.assertIn("START_LONGITUDE = 5.4137", kotlin)
+        self.assertIn("START_LATITUDE = 36.0849", kotlin)
+        self.assertIn("START_LONGITUDE = 9.3708", kotlin)
         # Bouton « cible » sans contour noir.
         button = kotlin.split('val locateButton =', 1)[1].split('root.addView(locateButton', 1)[0]
         self.assertNotIn("Color.BLACK", button)
